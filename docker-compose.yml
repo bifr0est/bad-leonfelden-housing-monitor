@@ -1,0 +1,66 @@
+services:
+  housing-monitor:
+    image: ghcr.io/bifr0est/bad-leonfelden-housing-monitor:latest
+    container_name: housing-monitor
+    restart: unless-stopped
+    
+    environment:
+      # Notification method: telegram, discord, or ntfy
+      - NOTIFICATION_METHOD=telegram
+      
+      # Check interval in minutes (default: 30)
+      - CHECK_INTERVAL=30
+      
+      # Telegram settings (if using telegram)
+      - TELEGRAM_TOKEN=your_bot_token_here
+      - TELEGRAM_CHAT_ID=your_chat_id_here
+      
+      # Discord settings (if using discord)
+      # - DISCORD_WEBHOOK_URL=your_webhook_url_here
+      
+      # ntfy settings (if using ntfy)
+      # - NTFY_TOPIC=your_topic_here
+      # - NTFY_SERVER=https://ntfy.sh
+    
+    volumes:
+      # Persistent storage for state file
+      - ./data:/app/data
+    
+    # Optional: Resource limits
+    deploy:
+      resources:
+        limits:
+          memory: 64M
+          cpus: '0.1'
+        reservations:
+          memory: 32M
+          cpus: '0.05'
+
+# Alternative configuration examples:
+
+  # Discord webhook example
+  housing-monitor-discord:
+    image: ghcr.io/bifr0est/bad-leonfelden-housing-monitor:latest
+    container_name: housing-monitor-discord
+    restart: unless-stopped
+    profiles: ["discord"]
+    environment:
+      - NOTIFICATION_METHOD=discord
+      - CHECK_INTERVAL=30
+      - DISCORD_WEBHOOK_URL=https://discord.com/api/webhooks/your/webhook/url
+    volumes:
+      - ./data-discord:/app/data
+
+  # ntfy.sh example  
+  housing-monitor-ntfy:
+    image: ghcr.io/bifr0est/bad-leonfelden-housing-monitor:latest
+    container_name: housing-monitor-ntfy
+    restart: unless-stopped
+    profiles: ["ntfy"]
+    environment:
+      - NOTIFICATION_METHOD=ntfy
+      - CHECK_INTERVAL=30
+      - NTFY_TOPIC=my_housing_alerts
+      - NTFY_SERVER=https://ntfy.sh
+    volumes:
+      - ./data-ntfy:/app/data
