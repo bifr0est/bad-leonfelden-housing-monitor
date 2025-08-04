@@ -17,7 +17,7 @@ A Python application that monitors the [Bad Leonfelden housing website](https://
 
 1. **Clone the repository:**
    ```bash
-   git clone https://github.com/yourusername/bad-leonfelden-housing-monitor.git
+   git clone https://github.com/bifr0est/bad-leonfelden-housing-monitor.git
    cd bad-leonfelden-housing-monitor
    ```
 
@@ -58,7 +58,7 @@ docker run -d \
   -e NOTIFICATION_METHOD=telegram \
   -e TELEGRAM_TOKEN=your_token \
   -e TELEGRAM_CHAT_ID=your_chat_id \
-  ghcr.io/yourusername/bad-leonfelden-housing-monitor:latest
+  ghcr.io/bifr0est/bad-leonfelden-housing-monitor:latest
 
 # Discord
 docker run -d \
@@ -67,13 +67,13 @@ docker run -d \
   -v $(pwd)/data:/app/data \
   -e NOTIFICATION_METHOD=discord \
   -e DISCORD_WEBHOOK_URL=your_webhook_url \
-  ghcr.io/yourusername/bad-leonfelden-housing-monitor:latest
+  ghcr.io/bifr0est/bad-leonfelden-housing-monitor:latest
 ```
 
 ### Option 3: Python Script
 
 ```bash
-git clone https://github.com/yourusername/bad-leonfelden-housing-monitor.git
+git clone https://github.com/bifr0est/bad-leonfelden-housing-monitor.git
 cd bad-leonfelden-housing-monitor
 pip install -r requirements.txt
 python housing_monitor.py
@@ -156,7 +156,7 @@ docker ps  # Look for "healthy" status
 
 1. **Clone and setup:**
    ```bash
-   git clone https://github.com/yourusername/bad-leonfelden-housing-monitor.git
+   git clone https://github.com/bifr0est/bad-leonfelden-housing-monitor.git
    cd bad-leonfelden-housing-monitor
    python -m venv venv
    source venv/bin/activate  # On Windows: venv\Scripts\activate
@@ -240,8 +240,8 @@ MIT License - see [LICENSE](LICENSE) file for details.
 
 ## Support 💬
 
-- 🐛 **Issues**: [GitHub Issues](https://github.com/yourusername/bad-leonfelden-housing-monitor/issues)
-- 💡 **Feature Requests**: [GitHub Discussions](https://github.com/yourusername/bad-leonfelden-housing-monitor/discussions)
+- 🐛 **Issues**: [GitHub Issues](https://github.com/bifr0est/bad-leonfelden-housing-monitor/issues)
+- 💡 **Feature Requests**: [GitHub Discussions](https://github.com/bifr0est/bad-leonfelden-housing-monitor/discussions)
 - 📧 **Contact**: Open an issue for questions
 
 ---
