@@ -33,4 +33,4 @@ HEALTHCHECK --interval=5m --timeout=10s --start-period=30s --retries=3 \
     CMD python -c "import os; exit(0 if os.path.exists(os.environ.get('STATE_FILE', '/app/data/housing_monitor_state.json')) else 1)"
 
 # Default command
-CMD ["python", "housing_monitor.py"]
+CMD ["python", "-u", "housing_monitor.py"]
