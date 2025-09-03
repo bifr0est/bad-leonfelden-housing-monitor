@@ -12,8 +12,6 @@ import os
 from datetime import datetime
 from typing import Optional
 
-print("Starting housing monitor...", flush=True)
-
 class HousingMonitor:
     DEFAULT_NOTIFICATION_TITLE = "Housing Update"
     
@@ -77,7 +75,7 @@ class HousingMonitor:
                     data = json.load(f)
                     return data.get('last_update_date')
         except Exception as e:
-            print(f"Error loading state: {e}", flush=True)
+            print(f"Error loading state: {e}")
         return None
     
     def save_state(self, update_date: str):
@@ -89,7 +87,7 @@ class HousingMonitor:
                     'last_check': datetime.now().isoformat()
                 }, f)
         except Exception as e:
-            print(f"Error saving state: {e}", flush=True)
+            print(f"Error saving state: {e}")
     
     def fetch_page(self) -> Optional[str]:
         """Fetch the housing page content"""
@@ -101,7 +99,7 @@ class HousingMonitor:
             response.raise_for_status()
             return response.text
         except requests.RequestException as e:
-            print(f"Error fetching page: {e}", flush=True)
+            print(f"Error fetching page: {e}")
             return None
     
     def extract_update_date(self, content: str) -> Optional[str]:
@@ -126,9 +124,9 @@ class HousingMonitor:
             }
             response = requests.post(url, data=data)
             response.raise_for_status()
-            print("Telegram notification sent successfully", flush=True)
+            print("Telegram notification sent successfully")
         except requests.RequestException as e:
-            print(f"Error sending Telegram notification: {e}", flush=True)
+            print(f"Error sending Telegram notification: {e}")
     
     def send_discord_notification(self, message: str, title: str = DEFAULT_NOTIFICATION_TITLE):
         """Send notification via Discord Webhook"""
@@ -144,9 +142,9 @@ class HousingMonitor:
             }
             response = requests.post(self.discord_webhook_url, json=data)
             response.raise_for_status()
-            print("Discord notification sent successfully", flush=True)
+            print("Discord notification sent successfully")
         except requests.RequestException as e:
-            print(f"Error sending Discord notification: {e}", flush=True)
+            print(f"Error sending Discord notification: {e}")
     
     def send_notification(self, message: str, title: str = DEFAULT_NOTIFICATION_TITLE):
         """Send notification via configured method"""
@@ -169,38 +167,38 @@ class HousingMonitor:
                     }
                 )
                 response.raise_for_status()
-                print("ntfy notification sent successfully", flush=True)
+                print("ntfy notification sent successfully")
             except requests.RequestException as e:
-                print(f"Error sending notification: {e}", flush=True)
+                print(f"Error sending notification: {e}")
         else:
             # Fallback for other methods
-            print(f"Notification ({self.notification_method}): {title} - {message}", flush=True)
+            print(f"Notification ({self.notification_method}): {title} - {message}")
     
     def check_for_updates(self) -> bool:
         """Check for updates and send notification if found"""
-        print(f"Checking for updates at {datetime.now()}", flush=True)
+        print(f"Checking for updates at {datetime.now()}")
         
         # Fetch page content
         content = self.fetch_page()
         if not content:
-            print("Failed to fetch page content", flush=True)
+            print("Failed to fetch page content")
             return False
         
         # Extract current update date
         current_date = self.extract_update_date(content)
         if not current_date:
-            print("Could not find update date on page", flush=True)
+            print("Could not find update date on page")
             return False
         
-        print(f"Current update date: {current_date}", flush=True)
-        print(f"Last known date: {self.last_known_date}", flush=True)
+        print(f"Current update date: {current_date}")
+        print(f"Last known date: {self.last_known_date}")
         
         # Check if there's an update
         if self.last_known_date is None:
             # First run - just save the current date
             self.save_state(current_date)
             self.last_known_date = current_date
-            print("Initial run - saved current state", flush=True)
+            print("Initial run - saved current state")
             
             # Send initial notification
             self.send_notification(
@@ -218,11 +216,11 @@ class HousingMonitor:
             # Update our stored state
             self.save_state(current_date)
             self.last_known_date = current_date
-            print("Update detected and notification sent!", flush=True)
+            print("Update detected and notification sent!")
             return True
         
         else:
-            print("No updates found", flush=True)
+            print("No updates found")
             return False
     
     def run_continuous(self, check_interval_minutes: int = None):
@@ -230,21 +228,21 @@ class HousingMonitor:
         if check_interval_minutes is None:
             check_interval_minutes = int(os.getenv('CHECK_INTERVAL', 30))
             
-        print(f"Starting continuous monitoring (checking every {check_interval_minutes} minutes)", flush=True)
-        print(f"Monitoring URL: {self.url}", flush=True)
-        print(f"Notification method: {self.notification_method}", flush=True)
+        print(f"Starting continuous monitoring (checking every {check_interval_minutes} minutes)")
+        print(f"Monitoring URL: {self.url}")
+        print(f"Notification method: {self.notification_method}")
         
         while True:
             try:
                 self.check_for_updates()
-                print(f"Sleeping for {check_interval_minutes} minutes...", flush=True)
+                print(f"Sleeping for {check_interval_minutes} minutes...")
                 time.sleep(check_interval_minutes * 60)
             except KeyboardInterrupt:
-                print("\nMonitoring stopped by user", flush=True)
+                print("\nMonitoring stopped by user")
                 break
             except Exception as e:
-                print(f"Unexpected error: {e}", flush=True)
-                print("Continuing monitoring...", flush=True)
+                print(f"Unexpected error: {e}")
+                print("Continuing monitoring...")
                 time.sleep(60)  # Wait 1 minute before retrying
 
 def main():
@@ -253,41 +251,41 @@ def main():
     
     # Check if running in container mode (environment variables set)
     if os.getenv('NOTIFICATION_METHOD'):
-        print("=== Bad Leonfelden Housing Monitor (Container Mode) ===", flush=True)
+        print("=== Bad Leonfelden Housing Monitor (Container Mode) ===")
         try:
             monitor = HousingMonitor()
-            print(f"Notification method: {monitor.notification_method}", flush=True)
-            print(f"Monitoring: {monitor.url}", flush=True)
-            print("Container is running...", flush=True)
-            print(flush=True)
+            print(f"Notification method: {monitor.notification_method}")
+            print(f"Monitoring: {monitor.url}")
+            print("Container is running...")
+            print()
             
             # Run once immediately, then start continuous monitoring
             monitor.check_for_updates()
             monitor.run_continuous()
         except ValueError as e:
-            print(f"Configuration error: {e}", flush=True)
-            print("Please check your environment variables.", flush=True)
+            print(f"Configuration error: {e}")
+            print("Please check your environment variables.")
             sys.exit(1)
     else:
         # Interactive mode for local development
-        print("=== Bad Leonfelfen Housing Monitor ===", flush=True)
-        print("Choose notification method:", flush=True)
-        print("1. Telegram Bot (Recommended)", flush=True)
-        print("2. Discord Webhook", flush=True) 
-        print("3. ntfy.sh", flush=True)
-        print(flush=True)
+        print("=== Bad Leonfelden Housing Monitor ===")
+        print("Choose notification method:")
+        print("1. Telegram Bot (Recommended)")
+        print("2. Discord Webhook") 
+        print("3. ntfy.sh")
+        print()
         
         choice = input("Enter choice (1-3): ").strip()
         
         if choice == "1":
             # Telegram setup
-            print("\nTelegram Bot Setup:", flush=True)
-            print("1. Message @BotFather on Telegram", flush=True)
-            print("2. Create bot with /newbot", flush=True)
-            print("3. Get your bot token", flush=True)
-            print("4. Message your bot, then visit: https://api.telegram.org/bot<TOKEN>/getUpdates", flush=True)
-            print("5. Find your chat_id in the response", flush=True)
-            print(flush=True)
+            print("\nTelegram Bot Setup:")
+            print("1. Message @BotFather on Telegram")
+            print("2. Create bot with /newbot")
+            print("3. Get your bot token")
+            print("4. Message your bot, then visit: https://api.telegram.org/bot<TOKEN>/getUpdates")
+            print("5. Find your chat_id in the response")
+            print()
             
             token = input("Enter bot token: ").strip()
             chat_id = input("Enter your chat ID: ").strip()
@@ -296,11 +294,11 @@ def main():
             
         elif choice == "2":
             # Discord setup
-            print("\nDiscord Webhook Setup:", flush=True)
-            print("1. Go to your Discord server", flush=True)
-            print("2. Server Settings → Integrations → Webhooks", flush=True)
-            print("3. Create webhook and copy URL", flush=True)
-            print(flush=True)
+            print("\nDiscord Webhook Setup:")
+            print("1. Go to your Discord server")
+            print("2. Server Settings → Integrations → Webhooks")
+            print("3. Create webhook and copy URL")
+            print()
             
             webhook_url = input("Enter Discord webhook URL: ").strip()
             monitor = HousingMonitor("discord", discord_webhook_url=webhook_url)
@@ -311,12 +309,12 @@ def main():
             monitor = HousingMonitor("ntfy", ntfy_topic=topic)
             
         else:
-            print("Invalid choice!", flush=True)
+            print("Invalid choice!")
             sys.exit(1)
         
-        print(f"\nMonitoring: {monitor.url}", flush=True)
-        print("Press Ctrl+C to stop", flush=True)
-        print(flush=True)
+        print(f"\nMonitoring: {monitor.url}")
+        print("Press Ctrl+C to stop")
+        print()
         
         # Run once immediately, then start continuous monitoring
         monitor.check_for_updates()
