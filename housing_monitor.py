@@ -209,7 +209,7 @@ class HousingMonitor:
         
         elif current_date != self.last_known_date:
             # Update detected!
-            message = f"🏠 <b>NEW HOUSING LISTINGS AVAILABLE!</b>\n\nThe Bad Leonfelden housing page has been updated!\n\n📅 Previous update: {self.last_known_date}\n📅 New update: {current_date}\n\n🔗 <a href='{self.url}'>Check the listings here</a>"
+            message = f"🏠 <b>NEW HOUSING LISTINGS AVAILABLE!</b>\n\nThe Bad Leonfelden housing page has been updated!\n\n📅 Previous update: {self.last_known_date}\n📅 New update: {current_date}\n\n🔗 <a href='{self.url}'> Check the listings here</a>"
             
             self.send_notification(message, "New Housing Listings!")
             
