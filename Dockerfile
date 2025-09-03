@@ -16,8 +16,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY housing_monitor.py .
 
 # Create non-root user for security
-RUN adduser --disabled-password --gecos '' --uid 1000 monitor
-RUN chown -R monitor:monitor /app
+RUN adduser --disabled-password --gecos '' --uid 1000 monitor && \
+    chown -R monitor:monitor /app
 USER monitor
 
 # Create volume for persistent state
