@@ -146,19 +146,16 @@ class HousingMonitor:
         except requests.RequestException as e:
             print(f"Error sending Discord notification: {e}")
     
-    def send_email_notification(self, message: str, title: str = DEFAULT_NOTIFICATION_TITLE):
-        """Send notification via email (using a service like SendGrid, Mailgun, etc.)"""
-        # This is a placeholder - you'd need to configure with your email service
-        print(f"Email notification: {title} - {message}")
-    
     def send_notification(self, message: str, title: str = DEFAULT_NOTIFICATION_TITLE):
         """Send notification via configured method"""
-        if hasattr(self, 'telegram_token') and hasattr(self, 'telegram_chat_id'):
-            self.send_telegram_notification(message)
-        elif hasattr(self, 'discord_webhook_url'):
+        if self.notification_method == "discord":
+            # Convert HTML message to Markdown for Discord
+            message = message.replace("<b>", "**").replace("</b>", "**")
+            message = re.sub(r'<a href="(.*?)">(.*?)</a>', r'[\2](\1)', message)
             self.send_discord_notification(message, title)
-        else:
-            # Fallback to ntfy.sh
+        elif self.notification_method == "telegram":
+            self.send_telegram_notification(message)
+        elif self.notification_method == "ntfy":
             try:
                 response = requests.post(
                     f"{self.ntfy_server}/{self.ntfy_topic}",
@@ -173,6 +170,9 @@ class HousingMonitor:
                 print("ntfy notification sent successfully")
             except requests.RequestException as e:
                 print(f"Error sending notification: {e}")
+        else:
+            # Fallback for other methods
+            print(f"Notification ({self.notification_method}): {title} - {message}")
     
     def check_for_updates(self) -> bool:
         """Check for updates and send notification if found"""
@@ -209,7 +209,7 @@ class HousingMonitor:
         
         elif current_date != self.last_known_date:
             # Update detected!
-            message = f"🏠 <b>NEW HOUSING LISTINGS AVAILABLE!</b>\n\nThe Bad Leonfelden housing page has been updated!\n\n📅 Previous update: {self.last_known_date}\n📅 New update: {current_date}\n\n🔗 <a href='{self.url}'> Check the listings here</a>"
+            message = f"🏠 <b>NEW HOUSING LISTINGS AVAILABLE!</b>\n\nThe Bad Leonfelden housing page has been updated!\n\n📅 Previous update: {self.last_known_date}\n📅 New update: {current_date}\n\n🔗 <a href='{self.url}'>Check the listings here</a>"
             
             self.send_notification(message, "New Housing Listings!")
             
