@@ -104,8 +104,8 @@ class HousingMonitor:
     
     def extract_update_date(self, content: str) -> Optional[str]:
         """Extract the 'Stand:' date from the page content"""
-        # Look for "Stand: DD.MM.YYYY" pattern
-        pattern = r'Stand:\s*(\d{2}\.\d{2}\.\d{4})'
+        # Look for "Stand: DD.MM.YYYY" pattern, handling HTML entities like &nbsp;
+        pattern = r'Stand:\s*(?:&nbsp;)?(\d{2}\.\d{2}\.\d{4})'
         match = re.search(pattern, content)
         
         if match:
