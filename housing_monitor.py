@@ -151,7 +151,7 @@ class HousingMonitor:
         if self.notification_method == "discord":
             # Convert HTML message to Markdown for Discord
             message = message.replace("<b>", "**").replace("</b>", "**")
-            message = re.sub(r'<a href="(.*?)">(.*?)</a>', r'[\2](\1)', message)
+            message = re.sub(r'<a href="([^"]*)">(.*?)</a>', r'[\2](\1)', message)
             self.send_discord_notification(message, title)
         elif self.notification_method == "telegram":
             self.send_telegram_notification(message)
