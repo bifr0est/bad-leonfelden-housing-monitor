@@ -78,3 +78,6 @@ data/
 # Environment variables
 .env.local
 .env.production
+
+# Ruff
+.ruff_cache/

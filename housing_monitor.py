@@ -29,7 +29,14 @@ class HousingMonitor:
         # Use environment variables if available, otherwise use kwargs
         self.notification_method = notification_method or os.getenv('NOTIFICATION_METHOD', 'telegram')
         self.state_file = os.getenv('STATE_FILE', kwargs.get('state_file', 'housing_monitor_state.json'))
-        
+
+        # Initialize all notification attributes
+        self.telegram_token: Optional[str] = None
+        self.telegram_chat_id: Optional[str] = None
+        self.discord_webhook_url: Optional[str] = None
+        self.ntfy_topic: Optional[str] = None
+        self.ntfy_server: Optional[str] = None
+
         # Set up notification method
         if self.notification_method == "telegram":
             self.telegram_token = kwargs.get('telegram_token') or os.getenv('TELEGRAM_TOKEN')
@@ -108,12 +115,16 @@ class HousingMonitor:
             }
             response = requests.post(url, data=data)
             response.raise_for_status()
-            print(f"Telegram notification sent successfully")
+            print("Telegram notification sent successfully")
         except requests.RequestException as e:
             print(f"Error sending Telegram notification: {e}")
     
     def send_discord_notification(self, message: str, title: str = "Housing Update"):
         """Send notification via Discord Webhook"""
+        if not self.discord_webhook_url:
+            print("Discord webhook URL not configured, skipping Discord notification")
+            return
+
         try:
             data = {
                 "embeds": [{
@@ -124,9 +135,10 @@ class HousingMonitor:
                     "footer": {"text": "Bad Leonfelden Housing Monitor"}
                 }]
             }
+            assert self.discord_webhook_url is not None  # Type checker hint
             response = requests.post(self.discord_webhook_url, json=data)
             response.raise_for_status()
-            print(f"Discord notification sent successfully")
+            print("Discord notification sent successfully")
         except requests.RequestException as e:
             print(f"Error sending Discord notification: {e}")
     
@@ -154,7 +166,7 @@ class HousingMonitor:
                     }
                 )
                 response.raise_for_status()
-                print(f"ntfy notification sent successfully")
+                print("ntfy notification sent successfully")
             except requests.RequestException as e:
                 print(f"Error sending notification: {e}")
     
@@ -193,7 +205,7 @@ class HousingMonitor:
         
         elif current_date != self.last_known_date:
             # Update detected!
-            message = f"🏠 <b>NEW HOUSING LISTINGS AVAILABLE!</b>\n\nThe Bad Leonfelden housing page has been updated!\n\n📅 Previous update: {self.last_known_date}\n📅 New update: {current_date}\n\n🔗 <a href='{self.url}'>Check the listings here</a>"
+            message = f"🏠 <b>NEW HOUSING LISTINGS AVAILABLE!</b>\n\nThe Bad Leonfelden housing page has been updated!\n\n📅 Previous update: {self.last_known_date}\n📅 New update: {current_date}\n\n🔗 <a href='{self.url}'> Check the listings here</a>"
             
             self.send_notification(message, "New Housing Listings!")
             

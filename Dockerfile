@@ -1,4 +1,5 @@
-FROM python:3-slim
+FROM python:3.13-slim
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 
 # Set working directory
 WORKDIR /app
@@ -8,12 +9,10 @@ RUN apt-get update && apt-get install -y \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy requirements and install Python dependencies
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
-
-# Copy application code
-COPY housing_monitor.py .
+# Copy project files and install dependencies
+COPY pyproject.toml uv.lock README.md ./
+COPY housing_monitor.py ./
+RUN uv sync --frozen --no-dev
 
 # Create non-root user for security
 RUN adduser --disabled-password --gecos '' --uid 1000 monitor
@@ -33,4 +32,4 @@ HEALTHCHECK --interval=5m --timeout=10s --start-period=30s --retries=3 \
     CMD python -c "import os; exit(0 if os.path.exists(os.environ.get('STATE_FILE', '/app/data/housing_monitor_state.json')) else 1)"
 
 # Default command
-CMD ["python", "housing_monitor.py"]
+CMD ["uv", "run", "housing_monitor.py"]
