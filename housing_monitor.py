@@ -13,6 +13,8 @@ from datetime import datetime
 from typing import Optional
 
 class HousingMonitor:
+    DEFAULT_NOTIFICATION_TITLE = "Housing Update"
+    
     def __init__(self, notification_method: str = None, **kwargs):
         """
         Initialize the housing monitor
@@ -38,25 +40,39 @@ class HousingMonitor:
         self.ntfy_server: Optional[str] = None
 
         # Set up notification method
-        if self.notification_method == "telegram":
-            self.telegram_token = kwargs.get('telegram_token') or os.getenv('TELEGRAM_TOKEN')
-            self.telegram_chat_id = kwargs.get('telegram_chat_id') or os.getenv('TELEGRAM_CHAT_ID')
-            if not self.telegram_token or not self.telegram_chat_id:
-                raise ValueError("Telegram requires: TELEGRAM_TOKEN and TELEGRAM_CHAT_ID environment variables")
-        
-        elif self.notification_method == "discord":
-            self.discord_webhook_url = kwargs.get('discord_webhook_url') or os.getenv('DISCORD_WEBHOOK_URL')
-            if not self.discord_webhook_url:
-                raise ValueError("Discord requires: DISCORD_WEBHOOK_URL environment variable")
-        
-        elif self.notification_method == "ntfy":
-            self.ntfy_topic = kwargs.get('ntfy_topic') or os.getenv('NTFY_TOPIC')
-            self.ntfy_server = kwargs.get('ntfy_server') or os.getenv('NTFY_SERVER', "https://ntfy.sh")
-            if not self.ntfy_topic:
-                raise ValueError("ntfy requires: NTFY_TOPIC environment variable")
+        self._setup_notification_service(kwargs)
         
         # Load previous state
         self.last_known_date = self.load_state()
+    
+    def _setup_notification_service(self, kwargs):
+        """Set up the notification service based on the selected method"""
+        if self.notification_method == "telegram":
+            self._setup_telegram(kwargs)
+        elif self.notification_method == "discord":
+            self._setup_discord(kwargs)
+        elif self.notification_method == "ntfy":
+            self._setup_ntfy(kwargs)
+    
+    def _setup_telegram(self, kwargs):
+        """Set up Telegram notification service"""
+        self.telegram_token = kwargs.get('telegram_token') or os.getenv('TELEGRAM_TOKEN')
+        self.telegram_chat_id = kwargs.get('telegram_chat_id') or os.getenv('TELEGRAM_CHAT_ID')
+        if not self.telegram_token or not self.telegram_chat_id:
+            raise ValueError("Telegram requires: TELEGRAM_TOKEN and TELEGRAM_CHAT_ID environment variables")
+    
+    def _setup_discord(self, kwargs):
+        """Set up Discord notification service"""
+        self.discord_webhook_url = kwargs.get('discord_webhook_url') or os.getenv('DISCORD_WEBHOOK_URL')
+        if not self.discord_webhook_url:
+            raise ValueError("Discord requires: DISCORD_WEBHOOK_URL environment variable")
+    
+    def _setup_ntfy(self, kwargs):
+        """Set up ntfy notification service"""
+        self.ntfy_topic = kwargs.get('ntfy_topic') or os.getenv('NTFY_TOPIC')
+        self.ntfy_server = kwargs.get('ntfy_server') or os.getenv('NTFY_SERVER', "https://ntfy.sh")
+        if not self.ntfy_topic:
+            raise ValueError("ntfy requires: NTFY_TOPIC environment variable")
         
     def load_state(self) -> Optional[str]:
         """Load the last known update date from state file"""
@@ -95,8 +111,8 @@ class HousingMonitor:
     
     def extract_update_date(self, content: str) -> Optional[str]:
         """Extract the 'Stand:' date from the page content"""
-        # Look for "Stand: DD.MM.YYYY" pattern
-        pattern = r'Stand:\s*(\d{2}\.\d{2}\.\d{4})'
+        # Look for "Stand: DD.MM.YYYY" pattern, handling HTML entities like &nbsp;
+        pattern = r'Stand:\s*(?:&nbsp;)?(\d{2}\.\d{2}\.\d{4})'
         match = re.search(pattern, content)
         
         if match:
@@ -119,7 +135,7 @@ class HousingMonitor:
         except requests.RequestException as e:
             print(f"Error sending Telegram notification: {e}")
     
-    def send_discord_notification(self, message: str, title: str = "Housing Update"):
+    def send_discord_notification(self, message: str, title: str = DEFAULT_NOTIFICATION_TITLE):
         """Send notification via Discord Webhook"""
         if not self.discord_webhook_url:
             print("Discord webhook URL not configured, skipping Discord notification")
@@ -142,19 +158,16 @@ class HousingMonitor:
         except requests.RequestException as e:
             print(f"Error sending Discord notification: {e}")
     
-    def send_email_notification(self, message: str, title: str = "Housing Update"):
-        """Send notification via email (using a service like SendGrid, Mailgun, etc.)"""
-        # This is a placeholder - you'd need to configure with your email service
-        print(f"Email notification: {title} - {message}")
-    
-    def send_notification(self, message: str, title: str = "Housing Update"):
+    def send_notification(self, message: str, title: str = DEFAULT_NOTIFICATION_TITLE):
         """Send notification via configured method"""
-        if hasattr(self, 'telegram_token') and hasattr(self, 'telegram_chat_id'):
-            self.send_telegram_notification(message)
-        elif hasattr(self, 'discord_webhook_url'):
+        if self.notification_method == "discord":
+            # Convert HTML message to Markdown for Discord
+            message = message.replace("<b>", "**").replace("</b>", "**")
+            message = re.sub(r'<a href="([^"]*)">([^<]*)</a>', r'[\2](\1)', message)
             self.send_discord_notification(message, title)
-        else:
-            # Fallback to ntfy.sh
+        elif self.notification_method == "telegram":
+            self.send_telegram_notification(message)
+        elif self.notification_method == "ntfy":
             try:
                 response = requests.post(
                     f"{self.ntfy_server}/{self.ntfy_topic}",
@@ -169,6 +182,9 @@ class HousingMonitor:
                 print("ntfy notification sent successfully")
             except requests.RequestException as e:
                 print(f"Error sending notification: {e}")
+        else:
+            # Fallback for other methods
+            print(f"Notification ({self.notification_method}): {title} - {message}")
     
     def check_for_updates(self) -> bool:
         """Check for updates and send notification if found"""
