@@ -1,13 +1,8 @@
-FROM python:3.13-slim
-COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
+# Use official uv image with Python 3.13
+FROM ghcr.io/astral-sh/uv:python3.13-bookworm-slim
 
 # Set working directory
 WORKDIR /app
-
-# Install system dependencies
-RUN apt-get update && apt-get install -y \
-    curl \
-    && rm -rf /var/lib/apt/lists/*
 
 # Copy project files and install dependencies
 COPY pyproject.toml uv.lock README.md ./
@@ -29,7 +24,7 @@ ENV STATE_FILE=/app/data/housing_monitor_state.json
 
 # Health check
 HEALTHCHECK --interval=5m --timeout=10s --start-period=30s --retries=3 \
-    CMD python -c "import os; exit(0 if os.path.exists(os.environ.get('STATE_FILE', '/app/data/housing_monitor_state.json')) else 1)"
+    CMD uv run python -c "import os; exit(0 if os.path.exists(os.environ.get('STATE_FILE', '/app/data/housing_monitor_state.json')) else 1)"
 
 # Default command
 CMD ["uv", "run", "housing_monitor.py"]
